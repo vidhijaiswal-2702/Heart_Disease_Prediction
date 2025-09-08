@@ -75,14 +75,26 @@ services:
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
 
-  webserver:
+  airflow-init:
     image: apache/airflow:2.10.2
     depends_on:
       - postgres
     environment:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - _PIP_ADDITIONAL_REQUIREMENTS=
+    volumes:
+      - ./dags:/opt/airflow/dags
+    entrypoint: >
+      /bin/bash -c "airflow db init && airflow users create --username admin --password admin --firstname Air --lastname Flow --role Admin --email admin@example.com"
+
+  webserver:
+    image: apache/airflow:2.10.2
+    depends_on:
+      - postgres
+      - airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
     volumes:
       - ./dags:/opt/airflow/dags
     ports:
@@ -103,4 +115,5 @@ services:
 
 volumes:
   postgres-db-volume:
+
 ```
