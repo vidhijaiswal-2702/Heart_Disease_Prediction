@@ -117,3 +117,37 @@ volumes:
   postgres-db-volume:
 
 ```
+
+```
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from datetime import datetime, timedelta
+
+# Default args for all tasks
+default_args = {
+    'owner': 'vidhi',
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+with DAG(
+    dag_id='daily_spark_ingestion',
+    default_args=default_args,
+    description='Run daily Spark ingestion job (Java JAR)',
+    start_date=datetime(2025, 9, 1),
+    schedule_interval='@daily',   # run daily
+    catchup=False,
+) as dag:
+
+    ingest_task = BashOperator(
+        task_id='run_spark_ingestion',
+        bash_command="""
+        spark-submit \
+          --class org.example.Injestion \
+          --master local[*] \
+          /opt/airflow/dags/airline-delay-ingestion.jar \
+          /opt/airflow/dags/Airline_Delay_Cause.csv \
+          /opt/airflow/dags/output/ingested_data
+        """
+    )
+```
