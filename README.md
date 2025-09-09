@@ -189,3 +189,5 @@ ENV PATH=$PATH:$SPARK_HOME/bin
 USER airflow
 ```
 
+```
+filter(expr("concat_ws('', " + String.join(",", df.columns()) + ") != ''"));
